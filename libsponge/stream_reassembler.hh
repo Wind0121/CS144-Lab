@@ -4,14 +4,21 @@
 #include "byte_stream.hh"
 
 #include <cstdint>
+#include <iostream>
 #include <string>
+#include <list>
+#include <utility>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
 class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
-
+    std::list<std::pair<char,uint64_t>> buf = {};
+    //下一个应该推入的idx
+    uint64_t _Index = 0;
+    bool eof_flag = false;
+    std::string last_str = "";
     ByteStream _output;  //!< The reassembled in-order byte stream
     size_t _capacity;    //!< The maximum number of bytes
 
@@ -48,6 +55,8 @@ class StreamReassembler {
     //! \brief Is the internal state empty (other than the output stream)?
     //! \returns `true` if no substrings are waiting to be assembled
     bool empty() const;
+
+    void insert(const std::string &data,const uint64_t index);
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
