@@ -16,7 +16,6 @@ class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
     std::map<uint64_t ,char> mp = {};
-    std::unordered_set<uint64_t > st = {};
     //下一个应该推入的idx
     uint64_t _Index = 0;
     bool eof_flag = false;
