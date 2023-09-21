@@ -1,4 +1,5 @@
-add_library (spongechecks STATIC byte_stream_test_harness.cc)
+add_library (spongechecks STATIC byte_stream_test_harness.cc
+        tcp_parser.cc)
 
 macro (add_test_exec exec_name)
     add_executable ("${exec_name}" "${exec_name}.cc")
