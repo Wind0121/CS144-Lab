@@ -45,5 +45,10 @@ void StreamReassembler::insert(const std::string &data, const uint64_t index) {
         newindex = _Index;
     }
     for(uint64_t i = 0;i < newdata.size();i++)
-        mp[newindex + i] = newdata[i];
+        if(newindex + i < _Index + _capacity - _output.buffer_size())//落在接收窗口内
+            mp[newindex + i] = newdata[i];
+}
+
+uint64_t StreamReassembler::get_index() {
+    return _Index;
 }
