@@ -11,7 +11,6 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 using namespace std;
 
 bool TCPReceiver::segment_received(const TCPSegment &seg) {
-    bool ret = false;
     TCPHeader header = seg.header();
     uint64_t index;
     size_t seq_length = seg.length_in_sequence_space();
@@ -20,7 +19,7 @@ bool TCPReceiver::segment_received(const TCPSegment &seg) {
         if(is_syn_set)//重复设置
             return false;
         is_syn_set = true;
-        ret = true;
+        is_isn_set = true;
         isn = header.seqno;
         index = 1;
         checkpoint = 1;
@@ -53,7 +52,7 @@ bool TCPReceiver::segment_received(const TCPSegment &seg) {
         return false;
     //推入序列
     _reassembler.push_substring(seg.payload().copy(),index - 1,header.fin);
-    //更新abs_seq
+    //更新abs_seq,这里+1是为了复原
     abs_seq = _reassembler.get_index() + 1;
     if(header.fin)
         abs_seq += 1;
@@ -61,12 +60,13 @@ bool TCPReceiver::segment_received(const TCPSegment &seg) {
 }
 
 optional<WrappingInt32> TCPReceiver::ackno() const {
-    if(is_syn_set)
+    if(is_isn_set)
         return wrap(abs_seq,isn);
     else
         return {};
 }
 
 size_t TCPReceiver::window_size() const {
-    return _capacity - unassembled_bytes();
+
+    return _capacity - _reassembler.stream_out().buffer_size();
 }

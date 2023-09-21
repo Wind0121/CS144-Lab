@@ -20,6 +20,7 @@ class TCPReceiver {
     WrappingInt32 isn;
     // 已经设置标记
     bool is_syn_set = false;
+    bool is_isn_set = false;
     // checkpoint，根据最后一次解封装的index设置
     uint64_t checkpoint = 0;
     // abs_seq为绝对序列值左端
