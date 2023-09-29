@@ -38,10 +38,9 @@ void TCPSender::fill_window() {
         return;
     size_t _rwnd = rwnd ? rwnd : 1;
     size_t dataLen = min(_rwnd - bytes_in_flight(),TCPConfig::MAX_PAYLOAD_SIZE);
+    //判断窗口还有多少
     if(dataLen <= 0)
         return;
-//    if(dataLen == TCPConfig::MAX_PAYLOAD_SIZE && !is_syn_set) dataLen -= 1;
-//    if(dataLen == TCPConfig::MAX_PAYLOAD_SIZE && !is_fin_set) dataLen -= 1;
 
     //通过函数得到TCPSegment
     std::string str = _stream.peek_output(dataLen);
@@ -62,14 +61,17 @@ void TCPSender::fill_window() {
 //! \returns `false` if the ackno appears invalid (acknowledges something the TCPSender hasn't sent yet)
 bool TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
     uint64_t abs_ackno = unwrap(ackno,_isn,_next_seqno);
+    //说明ackno无效
+    if(abs_ackno > _next_seqno)
+        return false;
+    //说明ackno更新了，需要重置计时器
     if(abs_ackno > last_abs_ackno){
         last_abs_ackno = abs_ackno;
         rto = _initial_retransmission_timeout;
         resend_cnt = 0;
         timer.reset(rto);
     }
-    if(abs_ackno > _next_seqno)
-        return false;
+
     std::list<TCPSegment> newst;
     for(auto pt = st.begin();pt != st.end();pt++){
         uint64_t leftno = unwrap(pt->header().seqno,_isn,_next_seqno);
@@ -80,6 +82,7 @@ bool TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     }
     st = newst;
 
+    //如果打开了新空间（指窗口变大），TCPSender可能需要再次填充窗口。
     if(window_size > rwnd){
         rwnd = window_size;
         fill_window();
