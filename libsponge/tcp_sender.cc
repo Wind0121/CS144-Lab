@@ -83,11 +83,9 @@ bool TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     st = newst;
 
     //如果打开了新空间（指窗口变大），TCPSender可能需要再次填充窗口。
-    if(window_size > rwnd){
-        rwnd = window_size;
-        fill_window();
-    }
     rwnd = window_size;
+    if(rwnd - bytes_in_flight())
+        fill_window();
     return true;
 }
 
