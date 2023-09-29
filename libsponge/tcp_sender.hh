@@ -8,6 +8,20 @@
 
 #include <functional>
 #include <queue>
+#include <random>
+
+class Timer{
+  private:
+    unsigned int _time;
+    unsigned int rto;
+  public:
+    Timer(unsigned int timeout):_time(0),rto(timeout){}
+    void reset(unsigned int timeout){rto = timeout,_time = 0;}
+    void update_time(unsigned int t){_time += t;}
+    bool is_expired(){return _time >= rto;}
+    void updata_rto(unsigned int timeout){rto = timeout;}
+
+};
 
 //! \brief The "sender" part of a TCP implementation.
 
@@ -32,12 +46,31 @@ class TCPSender {
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
 
+    // 接收窗口大小要记录
+    size_t rwnd{1};
+
+    //SYN和FIN的设置标志
+    bool is_syn_set{false};
+    bool is_fin_set{false};
+
+    //存储已发送但未确认的线性数据结构
+    std::list<TCPSegment> st{};
+
+    //重传计时器
+    Timer timer;
+
+    //rto
+    unsigned int rto;
+
+    //连续重传计数
+    unsigned int resend_cnt{0};
+
+    //上一次接收的新的abs_ackno
+    uint64_t last_abs_ackno{0};
+
   public:
     //! Initialize a TCPSender
-    TCPSender(const size_t capacity = TCPConfig::DEFAULT_CAPACITY,
-              const uint16_t retx_timeout = TCPConfig::TIMEOUT_DFLT,
-              const std::optional<WrappingInt32> fixed_isn = {});
-
+    TCPSender(const size_t capacity = TCPConfig::DEFAULT_CAPACITY,const uint16_t retx_timeout = TCPConfig::TIMEOUT_DFLT,const std::optional<WrappingInt32> fixed_isn = {});
     //! \name "Input" interface for the writer
     //!@{
     ByteStream &stream_in() { return _stream; }
@@ -87,6 +120,8 @@ class TCPSender {
     //! \brief relative seqno for the next byte to be sent
     WrappingInt32 next_seqno() const { return wrap(_next_seqno, _isn); }
     //!@}
+
+    TCPSegment get_TCPSegment(std::string& str);
 };
 
 #endif  // SPONGE_LIBSPONGE_TCP_SENDER_HH
