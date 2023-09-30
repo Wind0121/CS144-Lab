@@ -58,7 +58,8 @@ class StreamReassembler {
 
     void insert(const std::string &data,const uint64_t index);
 
-    uint64_t get_index(void);
+    size_t head_index() const { return _Index; }
+    bool input_ended() const { return _output.input_ended(); }
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
