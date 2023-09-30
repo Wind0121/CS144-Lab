@@ -38,7 +38,7 @@ void TCPSender::fill_window(bool send_syn) {
 
     size_t win = _window_size > 0 ? _window_size : 1;
     size_t remain;
-    if((remain = win - _bytes_in_flight) !=  0 && !_fin_flag){
+    while((remain = win - _bytes_in_flight) !=  0 && !_fin_flag){
         size_t size = min(TCPConfig::MAX_PAYLOAD_SIZE,remain);
         std::string str = _stream.read(size);
         TCPSegment seg;
