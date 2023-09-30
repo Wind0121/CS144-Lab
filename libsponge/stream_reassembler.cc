@@ -49,6 +49,4 @@ void StreamReassembler::insert(const std::string &data, const uint64_t index) {
             mp[newindex + i] = newdata[i];
 }
 
-uint64_t StreamReassembler::get_index() {
-    return _Index;
-}
+

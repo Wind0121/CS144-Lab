@@ -46,27 +46,19 @@ class TCPSender {
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
 
-    // 接收窗口大小要记录
-    size_t rwnd{1};
+    std::queue<TCPSegment> _segments_outstanding{};
+    size_t _bytes_in_flight = 0;
+    size_t _recv_ackno = 0;
+    bool _syn_flag = false;
+    bool _fin_flag = false;
+    size_t _window_size = 0;
 
-    //SYN和FIN的设置标志
-    bool is_syn_set{false};
-    bool is_fin_set{false};
+    size_t _timer = 0;
+    bool _timer_running = false;
+    size_t _retransmission_timeout = 0;
+    size_t _consecutive_retransmission = 0;
 
-    //存储已发送但未确认的线性数据结构
-    std::list<TCPSegment> st{};
-
-    //重传计时器
-    Timer timer;
-
-    //rto
-    unsigned int rto;
-
-    //连续重传计数
-    unsigned int resend_cnt{0};
-
-    //上一次接收的新的abs_ackno
-    uint64_t last_abs_ackno{0};
+    void send_segment(TCPSegment &seg);
 
   public:
     //! Initialize a TCPSender
@@ -87,7 +79,7 @@ class TCPSender {
     void send_empty_segment();
 
     //! \brief create and send segments to fill as much of the window as possible
-    void fill_window();
+    void fill_window(bool send_syn = true);
 
     //! \brief Notifies the TCPSender of the passage of time
     void tick(const size_t ms_since_last_tick);
@@ -121,7 +113,7 @@ class TCPSender {
     WrappingInt32 next_seqno() const { return wrap(_next_seqno, _isn); }
     //!@}
 
-    TCPSegment get_TCPSegment(std::string& str);
+    void send_empty_segment(WrappingInt32 seqno);
 };
 
 #endif  // SPONGE_LIBSPONGE_TCP_SENDER_HH
