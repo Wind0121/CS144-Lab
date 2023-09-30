@@ -32,6 +32,16 @@ uint64_t TCPSender::bytes_in_flight() const {
 }
 
 void TCPSender::fill_window() {
+    if(!is_syn_set){
+        std::string tmp = "";
+        TCPSegment segment = get_TCPSegment(tmp);
+        st.push_back(segment);
+        //更新_next_seqno
+        _next_seqno += segment.length_in_sequence_space();
+        //发送报文
+        _segments_out.push(segment);
+        return;
+    }
     if(is_syn_set && _stream.buffer_empty() && !_stream.input_ended())
         return;
     if(is_fin_set)
