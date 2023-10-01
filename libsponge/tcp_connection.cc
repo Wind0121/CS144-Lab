@@ -12,13 +12,21 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
-size_t TCPConnection::remaining_outbound_capacity() const { return _sender.stream_in().remaining_capacity(); }
+size_t TCPConnection::remaining_outbound_capacity() const {
+    return _sender.stream_in().remaining_capacity();
+}
 
-size_t TCPConnection::bytes_in_flight() const { return _sender.bytes_in_flight(); }
+size_t TCPConnection::bytes_in_flight() const {
+    return _sender.bytes_in_flight();
+}
 
-size_t TCPConnection::unassembled_bytes() const { return _receiver.unassembled_bytes(); }
+size_t TCPConnection::unassembled_bytes() const {
+    return _receiver.unassembled_bytes();
+}
 
-size_t TCPConnection::time_since_last_segment_received() const { return _time_since_last_segment_received; }
+size_t TCPConnection::time_since_last_segment_received() const {
+    return _time_since_last_segment_received;
+}
 
 void TCPConnection::segment_received(const TCPSegment &seg) {
     if (!_active)
@@ -68,7 +76,9 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     push_segments_out();
 }
 
-bool TCPConnection::active() const { return _active; }
+bool TCPConnection::active() const {
+    return _active;
+}
 
 size_t TCPConnection::write(const string &data) {
     size_t ret = _sender.stream_in().write(data);
@@ -94,16 +104,15 @@ void TCPConnection::end_input_stream() {
 }
 
 void TCPConnection::connect() {
-    // when connect, must active send a SYN
     push_segments_out(true);
 }
 
 TCPConnection::~TCPConnection() {
     try {
         if (active()) {
-            // Your code here: need to send a RST segment to the peer
             cerr << "Warning: Unclean shutdown of TCPConnection\n";
             unclean_shutdown(true);
+            // Your code here: need to send a RST segment to the peer
         }
     } catch (const exception &e) {
         std::cerr << "Exception destructing TCP FSM: " << e.what() << std::endl;
@@ -111,28 +120,26 @@ TCPConnection::~TCPConnection() {
 }
 
 bool TCPConnection::push_segments_out(bool send_syn) {
-    // default not send syn before recv a SYN
     _sender.fill_window(send_syn || in_syn_recv());
-    TCPSegment seg;
-    while (!_sender.segments_out().empty()) {
-        seg = _sender.segments_out().front();
+    while(!_sender.segments_out().empty()){
+        TCPSegment seg = _sender.segments_out().front();
         _sender.segments_out().pop();
-        if (_receiver.ackno().has_value()) {
+        if(_receiver.ackno().has_value()){
             seg.header().ack = true;
             seg.header().ackno = _receiver.ackno().value();
             seg.header().win = _receiver.window_size();
         }
-        if (_need_send_rst) {
+        if(_need_send_rst){
             _need_send_rst = false;
             seg.header().rst = true;
         }
-        _segments_out.push(seg);
+        _segments_out.push(seg);;
     }
     clean_shutdown();
     return true;
 }
 
-void TCPConnection::unclean_shutdown(bool send_rst) {
+void TCPConnection::unclean_shutdown(bool send_rst){
     _receiver.stream_out().set_error();
     _sender.stream_in().set_error();
     _active = false;
@@ -145,7 +152,7 @@ void TCPConnection::unclean_shutdown(bool send_rst) {
     }
 }
 
-bool TCPConnection::clean_shutdown() {
+bool TCPConnection::clean_shutdown(){
     if (_receiver.stream_out().input_ended() && !(_sender.stream_in().eof())) {
         _linger_after_streams_finish = false;
     }
@@ -157,9 +164,9 @@ bool TCPConnection::clean_shutdown() {
     return !_active;
 }
 
-bool TCPConnection::in_listen() { return !_receiver.ackno().has_value() && _sender.next_seqno_absolute() == 0; }
-
-bool TCPConnection::in_syn_recv() { return _receiver.ackno().has_value() && !_receiver.stream_out().input_ended(); }
+bool TCPConnection::in_syn_recv() {
+    return _receiver.ackno().has_value() && !_receiver.stream_out().input_ended();
+}
 
 bool TCPConnection::in_syn_sent() {
     return _sender.next_seqno_absolute() > 0 && _sender.bytes_in_flight() == _sender.next_seqno_absolute();
